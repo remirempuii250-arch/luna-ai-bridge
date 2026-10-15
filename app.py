@@ -1,10 +1,13 @@
 
 import json
 import os
+import urllib.error
 import urllib.request
+import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 MODEL = "gemini-3.8-flash"
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -30,19 +33,25 @@ class Handler(BaseHTTPRequestHandler):
                 "https://generativelanguage.googleapis.com/v1beta/models/"
                 + MODEL + ":generateContent?key=" + key
             )
+
             payload = {
                 "contents": [{
                     "parts": [{
-                        "text": "You are Luna, a friendly Minecraft princess. "
-                        "Reply naturally and briefly. Player says: " + message
+                        "text": (
+                            "You are Luna, a friendly Minecraft princess. "
+                            "Reply naturally and briefly. Player says: "
+                            + message
+                        )
                     }]
                 }]
             }
+
             request = urllib.request.Request(
                 url,
                 data=json.dumps(payload).encode(),
                 headers={"Content-Type": "application/json"}
             )
+
             with urllib.request.urlopen(request, timeout=30) as response:
                 result = json.loads(response.read())
 
@@ -50,18 +59,34 @@ class Handler(BaseHTTPRequestHandler):
             output = json.dumps({"reply": reply}).encode()
             self.send_response(200)
 
+        except urllib.error.HTTPError as e:
+            print("Gemini HTTP error:", e.code)
+            print(
+                "Gemini response:",
+                e.read().decode("utf-8", errors="replace")
+            )
+            output = json.dumps({
+                "error": "Gemini API request failed",
+                "status": e.code
+            }).encode()
+            self.send_response(500)
+
         except Exception:
-            output = json.dumps(
-                {"error": "Bridge request failed"}
-            ).encode()
+            traceback.print_exc()
+            output = json.dumps({
+                "error": "Bridge request failed"
+            }).encode()
             self.send_response(500)
 
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(output)
 
+
 server = HTTPServer(
-    ("0.0.0.0", int(os.environ.get("PORT", "10000"))), Handler
+    ("0.0.0.0", int(os.environ.get("PORT", "10000"))),
+    Handler
 )
 print("Luna bridge started")
 server.serve_forever()
+
