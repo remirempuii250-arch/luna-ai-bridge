@@ -59,17 +59,18 @@ class Handler(BaseHTTPRequestHandler):
             output = json.dumps({"reply": reply}).encode()
             self.send_response(200)
 
+
         except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", errors="replace")
             print("Gemini HTTP error:", e.code)
-            print(
-                "Gemini response:",
-                e.read().decode("utf-8", errors="replace")
-            )
+            print("Gemini response:", detail)
             output = json.dumps({
                 "error": "Gemini API request failed",
-                "status": e.code
+                "status": e.code,
+                "detail": detail[:2000]
             }).encode()
             self.send_response(500)
+
 
         except Exception:
             traceback.print_exc()
