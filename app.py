@@ -6,7 +6,7 @@ import urllib.request
 import traceback
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
-MODEL = "gemini-3.8-flash"
+MODEL = "gemini-2.5-flash"
 
 
 class Handler(BaseHTTPRequestHandler):
