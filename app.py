@@ -1,4 +1,5 @@
 
+
 import json
 import os
 import urllib.error
@@ -10,6 +11,10 @@ MODEL = "gemini-3.8-flash"
 
 
 class Handler(BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        self.send_response(200)
+        self.end_headers()
+
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
@@ -59,7 +64,6 @@ class Handler(BaseHTTPRequestHandler):
             output = json.dumps({"reply": reply}).encode()
             self.send_response(200)
 
-
         except urllib.error.HTTPError as e:
             detail = e.read().decode("utf-8", errors="replace")
             print("Gemini HTTP error:", e.code)
@@ -70,7 +74,6 @@ class Handler(BaseHTTPRequestHandler):
                 "detail": detail[:2000]
             }).encode()
             self.send_response(500)
-
 
         except Exception:
             traceback.print_exc()
@@ -90,4 +93,3 @@ server = HTTPServer(
 )
 print("Luna bridge started")
 server.serve_forever()
-
